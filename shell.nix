@@ -3,6 +3,6 @@ let
   moz_overlay = import sources.nixpkgs-mozilla;
   pkgs = import sources.nixpkgs { overlays = [ moz_overlay ]; };
 in pkgs.mkShell {
-  buildInputs = [ pkgs.latest.rustChannels.nightly.rust ];
+  buildInputs = [ pkgs.rustup ];
   RUST_BACKTRACE = 1;
 }
