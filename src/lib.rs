@@ -1,5 +1,5 @@
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
 type Result<T> = std::result::Result<T, UnsolvedError>;
 

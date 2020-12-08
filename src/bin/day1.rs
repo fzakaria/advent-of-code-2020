@@ -1,9 +1,9 @@
+use advent_of_code_2020::UnsolvedError;
 use std::collections::HashSet;
 use std::error::Error;
 use std::iter::Iterator;
 use std::str::FromStr;
 use std::string::ToString;
-use advent_of_code_2020::UnsolvedError;
 
 #[derive(Debug, PartialEq)]
 struct RGB {
@@ -29,7 +29,6 @@ fn part1() -> Result<(), Box<dyn Error>> {
 
     Err(Box::new(UnsolvedError))
 }
-
 
 fn part2() -> Result<(), Box<dyn Error>> {
     let expected_sum = 2020;
@@ -57,5 +56,5 @@ fn main() -> Result<(), Box<dyn Error>> {
     part1()?;
 
     // part 2
-    return part2()
+    return part2();
 }
