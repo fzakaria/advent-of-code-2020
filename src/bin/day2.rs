@@ -17,18 +17,30 @@ struct InputLine {
 }
 
 impl InputLine {
-
     fn is_valid_part1(&self) -> bool {
-        let count = self.password.chars().filter(|c| *c == self.policy.letter).count() as u32;
+        let count = self
+            .password
+            .chars()
+            .filter(|c| *c == self.policy.letter)
+            .count() as u32;
         return (self.policy.min <= count) && (count <= self.policy.max);
     }
 
     fn is_valid_part2(&self) -> bool {
-        let lhs = self.password.chars().nth((self.policy.min - 1) as usize).map(|c| c == self.policy.letter).unwrap_or(false);
-        let rhs = self.password.chars().nth((self.policy.max - 1) as usize).map(|c| c == self.policy.letter).unwrap_or(false);
+        let lhs = self
+            .password
+            .chars()
+            .nth((self.policy.min - 1) as usize)
+            .map(|c| c == self.policy.letter)
+            .unwrap_or(false);
+        let rhs = self
+            .password
+            .chars()
+            .nth((self.policy.max - 1) as usize)
+            .map(|c| c == self.policy.letter)
+            .unwrap_or(false);
         return lhs ^ rhs;
     }
-
 }
 
 impl FromStr for InputLine {
@@ -51,7 +63,7 @@ impl FromStr for InputLine {
     }
 }
 
-fn part1(input : &str) -> Result<u32, Box<dyn Error>> {
+fn part1(input: &str) -> Result<u32, Box<dyn Error>> {
     let lines: Vec<InputLine> = input
         .lines()
         .flat_map::<Result<InputLine, _>, _>(|line| InputLine::from_str(line))
@@ -62,7 +74,7 @@ fn part1(input : &str) -> Result<u32, Box<dyn Error>> {
     Ok(count)
 }
 
-fn part2(input : &str) -> Result<u32, Box<dyn Error>> {
+fn part2(input: &str) -> Result<u32, Box<dyn Error>> {
     let lines: Vec<InputLine> = input
         .lines()
         .flat_map::<Result<InputLine, _>, _>(|line| InputLine::from_str(line))
