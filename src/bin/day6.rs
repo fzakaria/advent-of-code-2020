@@ -69,7 +69,9 @@ fn part2(input: &str) -> Result<(), Box<dyn Error>> {
                 .iter()
                 .map(|person| person.chars())
                 .map(|person| HashSet::from_iter(person))
-                .fold_first(|a: HashSet<char>, b: HashSet<char>| a.intersection(&b).cloned().collect::<HashSet<char>>())
+                .fold_first(|a: HashSet<char>, b: HashSet<char>| {
+                    a.intersection(&b).cloned().collect::<HashSet<char>>()
+                })
         })
         .map(|group| group.len())
         .sum();
