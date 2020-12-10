@@ -1,6 +1,6 @@
+use advent_of_code_2020::UnsolvedError;
 use std::error::Error;
 use std::str::FromStr;
-use advent_of_code_2020::UnsolvedError;
 
 #[derive(Debug, PartialEq)]
 struct Seat {
@@ -9,7 +9,6 @@ struct Seat {
 }
 
 impl Seat {
-
     pub fn seat_id(&self) -> u32 {
         (self.row * 8) + self.column
     }
@@ -18,27 +17,30 @@ impl Seat {
         // The last three characters will be either L or R; these specify exactly one of the 8 columns of seats on the plane
         let row = Seat::val_from_encoding(&input[0..input.len() - 3], "F", "B", 0, 127)?;
         let column = Seat::val_from_encoding(&input[input.len() - 3..input.len()], "L", "R", 0, 7)?;
-        Ok(Seat {
-            row,
-            column
-        })
+        Ok(Seat { row, column })
     }
 
-    fn val_from_encoding(input: &str, start_str: &str, end_str: &str,start: u32, end: u32) -> Result<u32, UnsolvedError> {
+    fn val_from_encoding(
+        input: &str,
+        start_str: &str,
+        end_str: &str,
+        start: u32,
+        end: u32,
+    ) -> Result<u32, UnsolvedError> {
         if input.is_empty() {
-            return Err(UnsolvedError)
+            return Err(UnsolvedError);
         }
 
         // base case
         if input.len() == 1 {
             if input == start_str {
-                return Ok(start)
+                return Ok(start);
             }
             if input == end_str {
-                return Ok(end)
+                return Ok(end);
             }
 
-            return Err(UnsolvedError)
+            return Err(UnsolvedError);
         }
 
         let head = &input[0..1];
@@ -46,19 +48,19 @@ impl Seat {
         let middle = (start + end) / 2;
 
         if head == start_str {
-            return Seat::val_from_encoding(remaining, start_str, end_str, start, middle)
+            return Seat::val_from_encoding(remaining, start_str, end_str, start, middle);
         }
         if head == end_str {
-            return Seat::val_from_encoding(remaining, start_str, end_str, middle + 1, end)
+            return Seat::val_from_encoding(remaining, start_str, end_str, middle + 1, end);
         }
 
-        return Err(UnsolvedError)
+        return Err(UnsolvedError);
     }
-
 }
 
 fn part1(input: &str) -> Result<(), Box<dyn Error>> {
-    let max_seat_id = input.lines()
+    let max_seat_id = input
+        .lines()
         .flat_map(|line| Seat::from_encoding(line))
         .map(|seat| seat.seat_id())
         .max()
@@ -70,7 +72,30 @@ fn part1(input: &str) -> Result<(), Box<dyn Error>> {
 }
 
 fn part2(input: &str) -> Result<(), Box<dyn Error>> {
-    unimplemented!()
+    let seats: Vec<Seat> = input
+        .lines()
+        .flat_map(|line| Seat::from_encoding(line))
+        .collect();
+
+    const ROWS: u32 = 128;
+    const COLUMNS: u32 = 8;
+
+    for row in 0..ROWS {
+        let row_seats: Vec<&Seat> = seats.iter().filter(|&seat| seat.row == row).collect();
+
+        for column in 0..COLUMNS {
+            let seat_str = row_seats
+                .iter()
+                .find(|seat| seat.column == column)
+                .map(|seat| format!("({}, {})", seat.row, seat.column))
+                .unwrap_or(String::from("(MISSING)"));
+            print!("{} ", seat_str);
+        }
+
+        println!();
+    }
+
+    Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {

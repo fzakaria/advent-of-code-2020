@@ -1,7 +1,7 @@
 use advent_of_code_2020::UnsolvedError;
+use regex::Regex;
 use std::error::Error;
 use std::str::{FromStr, Lines};
-use regex::Regex;
 
 #[derive(Debug, PartialEq)]
 struct Passport {
@@ -23,7 +23,12 @@ fn find_passport_data(data: &Vec<&str>, prefix: &str) -> Result<String, Unsolved
         .ok_or(UnsolvedError)
 }
 
-fn validate_year_data(data: &Vec<&str>, prefix: &str, min: u32, max: u32) -> Result<u32, UnsolvedError> {
+fn validate_year_data(
+    data: &Vec<&str>,
+    prefix: &str,
+    min: u32,
+    max: u32,
+) -> Result<u32, UnsolvedError> {
     let year_as_str = find_passport_data(&data, prefix)?;
     if year_as_str.len() != 4 {
         return Err(UnsolvedError);
@@ -40,17 +45,21 @@ fn validate_height(data: &Vec<&str>) -> Result<String, UnsolvedError> {
     // a number followed by either cm or in:
     // If cm, the number must be at least 150 and at most 193.
     // If in, the number must be at least 59 and at most 76.
-    if height.strip_suffix("cm")
+    if height
+        .strip_suffix("cm")
         .and_then(|h| h.parse::<u32>().ok())
         .filter(|h| *h >= 150 && *h <= 193)
-        .is_some() {
+        .is_some()
+    {
         return Ok(height);
     }
 
-    if height.strip_suffix("in")
+    if height
+        .strip_suffix("in")
         .and_then(|h| h.parse::<u32>().ok())
         .filter(|h| *h >= 59 && *h <= 76)
-        .is_some() {
+        .is_some()
+    {
         return Ok(height);
     }
 
@@ -95,14 +104,14 @@ impl FromStr for Passport {
             // birth year: 4 digits &  at least 1920 & at most 2002
             birth_year: validate_year_data(&data, "byr:", 1920, 2002)?,
             // issue year: four digits; at least 2010 and at most 2020.
-            issue_year:  validate_year_data(&data, "iyr:", 2010, 2020)?,
+            issue_year: validate_year_data(&data, "iyr:", 2010, 2020)?,
             // expiration year: four digits; at least 2020 and at most 2030.
-            expiration_year:  validate_year_data(&data, "eyr:", 2020, 2030)?,
-            height:  validate_height(&data)?,
-            hair_color:  validate_hair_color(&data)?,
-            eye_color:  validate_eye_color(&data)?,
-            passport_id:  validate_passport_id(&data)?,
-            country_id:  find_passport_data(&data, "cid:").ok(),
+            expiration_year: validate_year_data(&data, "eyr:", 2020, 2030)?,
+            height: validate_height(&data)?,
+            hair_color: validate_hair_color(&data)?,
+            eye_color: validate_eye_color(&data)?,
+            passport_id: validate_passport_id(&data)?,
+            country_id: find_passport_data(&data, "cid:").ok(),
         });
     }
 }
