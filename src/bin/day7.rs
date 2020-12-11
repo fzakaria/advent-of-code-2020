@@ -4,8 +4,8 @@ use advent_of_code_2020::UnsolvedError;
 use std::collections::{HashSet, VecDeque};
 use std::error::Error;
 use std::iter::FromIterator;
-use std::str::Lines;
 use std::ops::Deref;
+use std::str::Lines;
 
 #[derive(Debug, PartialEq)]
 struct Quantity {
@@ -20,7 +20,7 @@ struct Rule {
 }
 
 fn normalize_bag_name(name: &str) -> &str {
-    return name.strip_suffix("s").unwrap_or(name)
+    return name.strip_suffix("s").unwrap_or(name);
 }
 
 impl Rule {
@@ -40,7 +40,9 @@ impl Rule {
                 .map(|r| {
                     let quantity: Vec<&str> = r.splitn(2, " ").collect();
                     return Ok(Quantity {
-                        bag: String::from(normalize_bag_name(*quantity.get(1).ok_or(UnsolvedError)?)),
+                        bag: String::from(normalize_bag_name(
+                            *quantity.get(1).ok_or(UnsolvedError)?,
+                        )),
                         amount: quantity
                             .get(0)
                             .and_then(|q| q.parse::<u32>().ok())
@@ -67,13 +69,13 @@ fn part1(input: &str) -> Result<(), Box<dyn Error>> {
     let mut queue: VecDeque<&str> = VecDeque::new();
     queue.push_back(starting_node);
     // we walk the graph finding all nodes
-    let mut seen : HashSet<&str> = HashSet::new();
+    let mut seen: HashSet<&str> = HashSet::new();
     while !queue.is_empty() {
         // this cannot fail
         let current = queue.pop_front().ok_or(UnsolvedError)?;
 
         // find all my neighbors
-        let neighbors : Vec<&Rule> = rules
+        let neighbors: Vec<&Rule> = rules
             .iter()
             .filter(|rule| {
                 rule.requirements
@@ -94,8 +96,35 @@ fn part1(input: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn part2(input: &str) -> Result<(), Box<dyn Error>> {
-    Ok(())
+fn part2(input: &str) -> Result<u32, Box<dyn Error>> {
+    // this is a shitty graph
+    let rules: Vec<Rule> = input
+        .lines()
+        .map(|line| Rule::from_line(line))
+        .collect::<Result<Vec<Rule>, UnsolvedError>>()?;
+
+    let starting_node = "shiny gold bag";
+    let mut queue: VecDeque<&str> = VecDeque::new();
+    queue.push_back(starting_node);
+    // we walk the graph finding all nodes
+    let mut result = 0;
+    while !queue.is_empty() {
+        let current = queue.pop_front().ok_or(UnsolvedError)?;
+        let current_rule = rules
+            .iter()
+            .find(|r| r.bag == current)
+            .ok_or(UnsolvedError)?;
+        for requirement in &current_rule.requirements {
+            result += requirement.amount;
+            for i in 0..requirement.amount {
+                queue.push_back(requirement.bag.deref());
+            }
+        }
+    }
+
+    println!("part2: {}", result);
+
+    Ok(result)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -108,4 +137,20 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use crate::part2;
+
+    #[test]
+    fn part2_test() {
+        let sample = "shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.";
+        let answer = part2(sample);
+        assert!(answer.is_ok());
+        assert_eq!(answer.unwrap(), 126);
+    }
+}
