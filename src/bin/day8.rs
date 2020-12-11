@@ -3,7 +3,7 @@
 use std::collections::{HashSet, VecDeque};
 use std::error::Error;
 use std::fmt;
-use std::str::{FromStr};
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operation {
@@ -42,7 +42,9 @@ impl Instruction {
             arg: parts
                 .get(1)
                 .and_then(|arg| i32::from_str_radix(arg, 10).ok())
-                .ok_or(VirtualMachineError::Custom("Could not parse argument".to_string()))?,
+                .ok_or(VirtualMachineError::Custom(
+                    "Could not parse argument".to_string(),
+                ))?,
         })
     }
 }
@@ -52,7 +54,7 @@ struct VirtualMachine {
     acc: i64,
     pc: usize,
     instructions: Vec<Instruction>,
-    seen_pc: HashSet<usize>
+    seen_pc: HashSet<usize>,
 }
 
 // Define our error types. These may be customized for our error handling cases.
@@ -87,7 +89,7 @@ impl VirtualMachine {
             acc: 0,
             pc: 0,
             instructions,
-            seen_pc: HashSet::new()
+            seen_pc: HashSet::new(),
         })
     }
 
@@ -129,19 +131,37 @@ fn part1(input: &str) -> Result<i64, Box<dyn Error>> {
     Ok(vm.acc)
 }
 
-fn jmp(vm: &mut VirtualMachine, pc: usize, inst: &Instruction, stack: &mut VecDeque<usize>, tried: bool) -> Result<i64, VirtualMachineError> {
+fn jmp(
+    vm: &mut VirtualMachine,
+    pc: usize,
+    inst: &Instruction,
+    stack: &mut VecDeque<usize>,
+    tried: bool,
+) -> Result<i64, VirtualMachineError> {
     let next_pc = ((pc as i32) + inst.arg) as usize;
     vm.pc = next_pc;
     return solve_recursively(vm, stack, tried);
 }
 
-fn nop(vm: &mut VirtualMachine, pc: usize, stack: &mut VecDeque<usize>, tried: bool) -> Result<i64, VirtualMachineError> {
+fn nop(
+    vm: &mut VirtualMachine,
+    pc: usize,
+    stack: &mut VecDeque<usize>,
+    tried: bool,
+) -> Result<i64, VirtualMachineError> {
     //undo pc and just make it a no-op
     vm.pc = pc + 1;
     return solve_recursively(vm, stack, tried);
 }
 
-fn try_jmp_or_nop(vm: &mut VirtualMachine, pc: usize, acc: i64, inst: &Instruction, stack: &mut VecDeque<usize>, tried: bool) -> Result<i64, VirtualMachineError> {
+fn try_jmp_or_nop(
+    vm: &mut VirtualMachine,
+    pc: usize,
+    acc: i64,
+    inst: &Instruction,
+    stack: &mut VecDeque<usize>,
+    tried: bool,
+) -> Result<i64, VirtualMachineError> {
     assert_eq!(inst.op, Operation::JMP);
     let result = jmp(vm, pc, inst, stack, tried);
     if result.is_ok() {
@@ -153,7 +173,14 @@ fn try_jmp_or_nop(vm: &mut VirtualMachine, pc: usize, acc: i64, inst: &Instructi
     return nop(vm, pc, stack, true);
 }
 
-fn try_nop_or_jmp(vm: &mut VirtualMachine, pc: usize, acc: i64, inst: &Instruction, stack: &mut VecDeque<usize>, tried: bool) -> Result<i64, VirtualMachineError> {
+fn try_nop_or_jmp(
+    vm: &mut VirtualMachine,
+    pc: usize,
+    acc: i64,
+    inst: &Instruction,
+    stack: &mut VecDeque<usize>,
+    tried: bool,
+) -> Result<i64, VirtualMachineError> {
     assert_eq!(inst.op, Operation::NOP);
     let result = nop(vm, pc, stack, tried);
     if result.is_ok() {
@@ -164,19 +191,27 @@ fn try_nop_or_jmp(vm: &mut VirtualMachine, pc: usize, acc: i64, inst: &Instructi
     return jmp(vm, pc, inst, stack, true);
 }
 
-fn solve_recursively(vm: &mut VirtualMachine, stack: &mut VecDeque<usize>, tried: bool) -> Result<i64, VirtualMachineError> {
+fn solve_recursively(
+    vm: &mut VirtualMachine,
+    stack: &mut VecDeque<usize>,
+    tried: bool,
+) -> Result<i64, VirtualMachineError> {
     if vm.pc == vm.instructions.len() {
-        return Ok(vm.acc)
+        return Ok(vm.acc);
     }
 
-    let inst: Instruction = vm.instructions
-            .get(vm.pc)
-            .ok_or(VirtualMachineError::Custom("Did not find nth instruction".to_string()))?.clone();
+    let inst: Instruction = vm
+        .instructions
+        .get(vm.pc)
+        .ok_or(VirtualMachineError::Custom(
+            "Did not find nth instruction".to_string(),
+        ))?
+        .clone();
 
     let pc = vm.pc;
 
     if stack.contains(&pc) {
-        return Err(VirtualMachineError::InfiniteRecursion)
+        return Err(VirtualMachineError::InfiniteRecursion);
     }
 
     stack.push_front(pc);
@@ -187,12 +222,8 @@ fn solve_recursively(vm: &mut VirtualMachine, stack: &mut VecDeque<usize>, tried
             vm.pc += 1;
             solve_recursively(vm, stack, tried)
         }
-        Operation::JMP => {
-            try_jmp_or_nop(vm, pc, vm.acc, &inst, stack, tried)
-        }
-        Operation::NOP => {
-            try_nop_or_jmp(vm, pc, vm.acc, &inst, stack, tried)
-        }
+        Operation::JMP => try_jmp_or_nop(vm, pc, vm.acc, &inst, stack, tried),
+        Operation::NOP => try_nop_or_jmp(vm, pc, vm.acc, &inst, stack, tried),
     };
 
     stack.pop_front();
@@ -202,8 +233,8 @@ fn solve_recursively(vm: &mut VirtualMachine, stack: &mut VecDeque<usize>, tried
 
 fn part2(input: &str) -> Result<i64, VirtualMachineError> {
     let mut vm = VirtualMachine::new(input)?;
-    let mut stack : VecDeque<usize> = VecDeque::new();
-    let answer =  solve_recursively(&mut vm, &mut stack, false)?;
+    let mut stack: VecDeque<usize> = VecDeque::new();
+    let answer = solve_recursively(&mut vm, &mut stack, false)?;
 
     println!("part2: {}", answer);
     return Ok(answer);
@@ -220,7 +251,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{part2, Instruction, Operation, part1};
+    use crate::{part1, part2, Instruction, Operation};
 
     #[test]
     fn instruction_convert() {
