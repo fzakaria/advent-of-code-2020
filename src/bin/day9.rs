@@ -64,7 +64,6 @@ fn part1(input: &str, capacity: usize) -> Result<i64, Box<dyn Error>> {
         cipher.consume_number(value);
     }
 
-    println!("farid");
     Err(Box::new(UnsolvedError))
 }
 
@@ -81,13 +80,11 @@ fn part2(input: &str, capacity: usize) -> Result<i64, Box<dyn Error>> {
     for i in 0..numbers.len() {
         for j in i..numbers.len() {
             let slice = &numbers[i..j];
-            let sum : i64 = slice.iter().sum();
+            let sum: i64 = slice.iter().sum();
             if sum == part1_answer {
-                let answer =  slice.iter().max().unwrap() + slice.iter().min().unwrap();
+                let answer = slice.iter().max().unwrap() + slice.iter().min().unwrap();
                 println!("part2: {}", answer);
-                return Ok(
-                    answer
-                )
+                return Ok(answer);
             }
         }
     }
@@ -108,7 +105,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{part2, part1};
+    use crate::{part1, part2};
 
     #[test]
     fn part1_test() {
