@@ -112,8 +112,12 @@ fn key(adapters: &Vec<Adapter>, starting_jolt: i32) -> String {
     format!("{:?}_{:?}", jolts, starting_jolt)
 }
 
-fn part2_recursion(adapters: &Vec<Adapter>, starting_jolt: i32, seen: &mut HashMap<String, u64>, visited: &mut VecDeque<i32>) -> u64 {
-
+fn part2_recursion(
+    adapters: &Vec<Adapter>,
+    starting_jolt: i32,
+    seen: &mut HashMap<String, u64>,
+    visited: &mut VecDeque<i32>,
+) -> u64 {
     let key = key(adapters, starting_jolt);
 
     if starting_jolt == 0 {
@@ -132,7 +136,6 @@ fn part2_recursion(adapters: &Vec<Adapter>, starting_jolt: i32, seen: &mut HashM
     let mut answers = 0;
 
     for possible_adapter in possible_adapters {
-
         if visited.contains(&possible_adapter.jolt) {
             continue;
         }
@@ -140,7 +143,6 @@ fn part2_recursion(adapters: &Vec<Adapter>, starting_jolt: i32, seen: &mut HashM
         visited.push_front(possible_adapter.jolt);
         answers += part2_recursion(adapters, possible_adapter.jolt, seen, visited);
         visited.pop_front();
-
     }
 
     seen.insert(key, answers);
@@ -155,13 +157,14 @@ fn part2(input: &str) -> Result<u64, Box<dyn Error>> {
         .collect::<Result<Vec<Adapter>, UnsolvedError>>()?;
 
     // add the starting adapter
-    adapters.push(Adapter { jolt: 0} );
+    adapters.push(Adapter { jolt: 0 });
 
     let final_jolt = adapters
         .iter()
         .map(|adapter| adapter.jolt)
         .max()
-        .ok_or(UnsolvedError)? + 3;
+        .ok_or(UnsolvedError)?
+        + 3;
 
     let mut seen = HashMap::new();
     let mut visited = VecDeque::new();
@@ -171,7 +174,6 @@ fn part2(input: &str) -> Result<u64, Box<dyn Error>> {
 
     Ok(answer)
 }
-
 
 fn main() -> Result<(), Box<dyn Error>> {
     let input = include_str!("day10_1.txt");
