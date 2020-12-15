@@ -172,10 +172,13 @@ impl Airplane {
             .get(((self.columns * (position.row - 1)) + position.column - 1) as usize);
     }
 
-    fn first_non_empty<'m>(&'m self, starting: &'m Position, direction: for<'a> fn(&'a Airplane, &'a Position) -> Option<&'a Position>) -> Option<&'m Position> {
+    fn first_non_empty<'m>(
+        &'m self,
+        starting: &'m Position,
+        direction: for<'a> fn(&'a Airplane, &'a Position) -> Option<&'a Position>,
+    ) -> Option<&'m Position> {
         let mut position = direction(self, starting);
         while let Some(seat) = position {
-
             // advance if it's a floor
             if seat.status == Status::FLOOR {
                 position = direction(self, seat);
@@ -216,9 +219,9 @@ impl Airplane {
             self.first_non_empty(position, Airplane::bottom_right),
             self.first_non_empty(position, Airplane::bottom_left),
         ]
-            .into_iter()
-            .flat_map(|a| a)
-            .collect()
+        .into_iter()
+        .flat_map(|a| a)
+        .collect()
     }
 }
 
