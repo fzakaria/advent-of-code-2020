@@ -172,6 +172,23 @@ impl Airplane {
             .get(((self.columns * (position.row - 1)) + position.column - 1) as usize);
     }
 
+    fn first_non_empty<'m>(&'m self, starting: &'m Position, direction: for<'a> fn(&'a Airplane, &'a Position) -> Option<&'a Position>) -> Option<&'m Position> {
+        let mut position = direction(self, starting);
+        while let Some(seat) = position {
+
+            // advance if it's a floor
+            if seat.status == Status::FLOOR {
+                position = direction(self, seat);
+                continue;
+            }
+
+            // otherwise it's the first non-empty; return it!
+            return Some(seat);
+        }
+
+        return Option::None;
+    }
+
     fn adjacent_seats(&self, position: &Position) -> Vec<&Position> {
         vec![
             self.right(position),
@@ -186,6 +203,22 @@ impl Airplane {
         .into_iter()
         .flat_map(|a| a)
         .collect()
+    }
+
+    fn adjacent_loose_seats<'m>(&'m self, position: &'m Position) -> Vec<&'m Position> {
+        vec![
+            self.first_non_empty(position, Airplane::right),
+            self.first_non_empty(position, Airplane::left),
+            self.first_non_empty(position, Airplane::down),
+            self.first_non_empty(position, Airplane::up),
+            self.first_non_empty(position, Airplane::top_right),
+            self.first_non_empty(position, Airplane::top_left),
+            self.first_non_empty(position, Airplane::bottom_right),
+            self.first_non_empty(position, Airplane::bottom_left),
+        ]
+            .into_iter()
+            .flat_map(|a| a)
+            .collect()
     }
 }
 
@@ -254,8 +287,69 @@ fn part1(input: &str) -> Result<usize, Box<dyn Error>> {
     Ok(answer)
 }
 
-fn part2(input: &str) -> Result<i64, Box<dyn Error>> {
-    Err(Box::new(UnsolvedError))
+fn part2(input: &str) -> Result<usize, Box<dyn Error>> {
+    let mut airplane = Airplane::from_input(input)?;
+    println!(
+        "airplane with rows: {} & columns: {}",
+        airplane.rows, airplane.columns
+    );
+    loop {
+        // helpful for debugging
+        println!("{}", airplane);
+        let mut new_positions = Airplane {
+            positions: vec![],
+            rows: airplane.rows,
+            columns: airplane.columns,
+        };
+        for position in &airplane.positions {
+            match position.status {
+                Status::FLOOR => {}
+                Status::OCCUPIED => {
+                    let adjacent = airplane.adjacent_loose_seats(position);
+                    let five_or_more = adjacent
+                        .iter()
+                        .filter(|seat| seat.status == Status::OCCUPIED)
+                        .count();
+                    if five_or_more >= 5 {
+                        let mut new_position = position.clone();
+                        new_position.status = Status::EMPTY;
+                        new_positions.positions.push(new_position);
+                        continue;
+                    }
+                }
+                Status::EMPTY => {
+                    let adjacent = airplane.adjacent_loose_seats(position);
+                    let any_occupied = adjacent.iter().any(|seat| seat.status == Status::OCCUPIED);
+                    if !any_occupied {
+                        let mut new_position = position.clone();
+                        new_position.status = Status::OCCUPIED;
+                        new_positions.positions.push(new_position);
+                        continue;
+                    }
+                }
+            }
+            // if none of the rules hit, then add the seat as it was
+            new_positions.positions.push(position.clone());
+        }
+
+        // if the iterations have stabilized
+        if airplane.key() == new_positions.key() {
+            break;
+        }
+
+        // move to the next iteration
+        airplane = new_positions;
+    }
+
+    let answer = airplane
+        .positions
+        .iter()
+        .filter(|position| position.status == Status::OCCUPIED)
+        .count();
+
+    println!("part2: {}", answer);
+
+    Ok(answer)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -290,5 +384,20 @@ L.LLLLL.LL";
     }
 
     #[test]
-    fn part2_test() {}
+    fn part2_test() {
+        let sample = "L.LL.LL.LL
+LLLLLLL.LL
+L.L.L..L..
+LLLL.LL.LL
+L.LL.LL.LL
+L.LLLLL.LL
+..L.L.....
+LLLLLLLLLL
+L.LLLLLL.L
+L.LLLLL.LL";
+
+        let answer = part2(sample);
+        assert!(answer.is_ok());
+        assert_eq!(answer.unwrap(), 26);
+    }
 }
