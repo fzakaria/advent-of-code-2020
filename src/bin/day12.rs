@@ -37,7 +37,6 @@ struct Waypoint {
 }
 
 impl Waypoint {
-
     fn rotate(&mut self, degrees: u32) {
         let times = degrees / 90;
         for _ in 0..times {
@@ -53,7 +52,7 @@ impl Waypoint {
             Direction::NORTH => self.north += units as i32,
             Direction::EAST => self.east += units as i32,
             Direction::SOUTH => self.north -= units as i32,
-            Direction::WEST => self.east -= units as i32
+            Direction::WEST => self.east -= units as i32,
         }
     }
 }
@@ -63,7 +62,7 @@ struct Ship {
     north: i32,
     east: i32,
     direction: Direction,
-    waypoint: Waypoint // relative to the ship's directions
+    waypoint: Waypoint, // relative to the ship's directions
 }
 
 impl Ship {
@@ -72,10 +71,7 @@ impl Ship {
             north: 0,
             east: 0,
             direction: Direction::EAST,
-            waypoint: Waypoint {
-                north: 1,
-                east: 10,
-            }
+            waypoint: Waypoint { north: 1, east: 10 },
         }
     }
 
@@ -89,13 +85,21 @@ impl Ship {
             Direction::NORTH => self.north += units as i32,
             Direction::EAST => self.east += units as i32,
             Direction::SOUTH => self.north -= units as i32,
-            Direction::WEST => self.east -= units as i32
+            Direction::WEST => self.east -= units as i32,
         }
     }
 
     fn rotate(&mut self, degrees: u32) {
-        let mut directions = vec![Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST];
-        let index = directions.iter().position(|d| *d == self.direction).unwrap();
+        let mut directions = vec![
+            Direction::NORTH,
+            Direction::EAST,
+            Direction::SOUTH,
+            Direction::WEST,
+        ];
+        let index = directions
+            .iter()
+            .position(|d| *d == self.direction)
+            .unwrap();
         directions.rotate_left(index);
 
         let rotations = degrees / 90;
@@ -112,7 +116,7 @@ impl Ship {
             }
             Action::Rotation(degrees) => {
                 self.rotate(*degrees as u32);
-            },
+            }
             Action::Forward(units) => self.advance(&self.direction.clone(), *units),
         }
     }
@@ -124,11 +128,10 @@ impl Ship {
             }
             Action::Rotation(degrees) => {
                 self.waypoint.rotate(*degrees as u32);
-            },
+            }
             Action::Forward(units) => self.advance_to_waypoint(*units),
         }
     }
-
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -222,7 +225,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{part1, part2, Ship, Direction};
+    use crate::{part1, part2, Direction, Ship};
 
     #[test]
     fn rotation_test() {
@@ -263,6 +266,5 @@ F11";
         let answer = part2(sample);
         assert!(answer.is_ok());
         assert_eq!(answer.unwrap(), 286)
-
     }
 }
