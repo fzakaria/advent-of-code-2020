@@ -16,3 +16,18 @@ impl fmt::Display for UnsolvedError {
 }
 
 impl Error for UnsolvedError {}
+
+#[derive(Debug, Clone)]
+pub enum AdventOfCodeError {
+    Custom(String),
+}
+
+impl Error for AdventOfCodeError {}
+
+impl fmt::Display for AdventOfCodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            AdventOfCodeError::Custom(ref err) => write!(f, "Error: {}", err),
+        }
+    }
+}
