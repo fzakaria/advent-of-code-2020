@@ -4,23 +4,22 @@ extern crate lazy_static;
 
 use advent_of_code_2020::{AdventOfCodeError, UnsolvedError};
 use itertools::Itertools;
-use std::error::Error;
-use std::str::FromStr;
-use std::{thread, fmt};
-use std::collections::HashMap;
-use std::fmt::Formatter;
 use regex::Regex;
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt::Formatter;
+use std::str::FromStr;
+use std::{fmt, thread};
 
 struct Mask {
     on: u64,
-    off: u64
+    off: u64,
 }
 
 impl Mask {
-
     const DO_NOTHING: Mask = Mask {
         on: 0,
-        off: u64::max_value()
+        off: u64::max_value(),
     };
 
     // apply tne mask
@@ -43,16 +42,17 @@ impl Mask {
                 'X' => {
                     // do nothing
                 }
-                _ => return Err(AdventOfCodeError::Custom("Unmatched char for mask".to_string()))
+                _ => {
+                    return Err(AdventOfCodeError::Custom(
+                        "Unmatched char for mask".to_string(),
+                    ))
+                }
             }
         }
 
         off = !off;
 
-        Ok(Mask {
-            on,
-            off
-        })
+        Ok(Mask { on, off })
     }
 }
 
@@ -68,7 +68,6 @@ fn part1(input: &str) -> Result<u64, Box<dyn Error>> {
     let mut memory: HashMap<u64, u64> = HashMap::new();
     let mut mask = Mask::DO_NOTHING;
     for line in input.lines() {
-
         if mask_re.is_match(line) {
             let captures = mask_re.captures(line).ok_or(UnsolvedError)?;
             mask = Mask::new(&captures[1])?;
@@ -83,7 +82,9 @@ fn part1(input: &str) -> Result<u64, Box<dyn Error>> {
             continue;
         }
 
-        return Err(Box::new(AdventOfCodeError::Custom("Unhandled regex".to_string())));
+        return Err(Box::new(AdventOfCodeError::Custom(
+            "Unhandled regex".to_string(),
+        )));
     }
 
     let answer: u64 = memory.values().sum();
