@@ -3,10 +3,10 @@
 extern crate lazy_static;
 
 use advent_of_code_2020::{AdventOfCodeError, UnsolvedError};
+use itertools::Itertools;
 use std::error::Error;
 use std::str::FromStr;
 use std::thread;
-use itertools::Itertools;
 
 fn part1(input: &str) -> Result<u32, Box<dyn Error>> {
     let split_once = input.split_once("\n").ok_or(UnsolvedError)?;
