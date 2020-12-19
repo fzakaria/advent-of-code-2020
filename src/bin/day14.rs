@@ -92,7 +92,90 @@ fn part1(input: &str) -> Result<u64, Box<dyn Error>> {
     Ok(answer)
 }
 
+enum Bit {
+    ZERO,
+    ONE,
+    FLOATING
+}
+
+fn apply_part2_mask(mask: &str, value: u64) -> Vec<u64> {
+    let mask_without_x_str = mask.replace("X", "0");
+    let mask_without_x = u64::from_str_radix(&mask_without_x_str, 2).unwrap();
+    let partial_mask_apply = value | mask_without_x;
+    let partial_mask_apply_str = format!("{:036b}", partial_mask_apply);
+    let mut mask_apply_str = String::new();
+    // now go through and set matching X
+    for (index, char) in partial_mask_apply_str.chars().enumerate() {
+        if mask[index..index+1] == *"X" {
+            mask_apply_str.push('X');
+        } else {
+            mask_apply_str.push(char)
+        }
+    }
+    let combinations = combinations(&mask_apply_str);
+    combinations
+        .iter()
+        .map(|m| u64::from_str_radix(m, 2).unwrap())
+        .collect()
+}
+
+fn combinations(input: &str) -> Vec<String> {
+    if input.is_empty() {
+        let mut result: Vec<String> = Vec::new();
+        result.push("".to_owned());
+        return result;
+    }
+
+    let letter = &input[0..1];
+    let remaining = &input[1..input.len()];
+    let solutions = combinations(remaining);
+    let mut answer: Vec<String> = Vec::new();
+    for solution in solutions {
+        if letter == "0" || letter == "1" {
+            answer.push("".to_string() + letter + solution.as_str());
+        } else if letter == "X" {
+            answer.push("".to_string() + "1" + solution.as_str());
+            answer.push("".to_string() + "0" + solution.as_str());
+        } else {
+            panic!("Unknown letter");
+        }
+    }
+
+    return answer;
+}
+
 fn part2(input: &str) -> Result<u64, Box<dyn Error>> {
+    let mask_re = Regex::new(r"^mask\s=\s(\w+)$")?;
+    let mem_re = Regex::new(r"^mem\[(\d+)]\s=\s(\d+)$")?;
+    let mut memory: HashMap<u64, u64> = HashMap::new();
+    let mut mask = "00000000000000000000000000000000000000".to_owned();
+    for line in input.lines() {
+        if mask_re.is_match(line) {
+            let captures = mask_re.captures(line).ok_or(UnsolvedError)?;
+            mask = captures[1].to_owned();
+            continue;
+        }
+
+        if mem_re.is_match(line) {
+            let captures = mem_re.captures(line).ok_or(UnsolvedError)?;
+            let original_address = captures[1].parse::<u64>()?;
+            let value = captures[2].parse::<u64>()?;
+
+            let addresses = apply_part2_mask(&mask, original_address);
+            for address in addresses {
+                memory.insert(address, value);
+            }
+            continue;
+        }
+
+        return Err(Box::new(AdventOfCodeError::Custom(
+            "Unhandled regex".to_string(),
+        )));
+    }
+
+    let answer: u64 = memory.values().sum();
+    println!("part2: {}", answer);
+
     Ok(0)
 }
 
@@ -107,7 +190,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{part1, part2, Mask};
+    use crate::{apply_part2_mask, part1, part2, Mask};
+    use itertools::Itertools;
 
     #[test]
     fn mask_test() {
@@ -143,5 +227,11 @@ mem[26] = 1";
     }
 
     #[test]
-    fn part2_test() {}
+    fn part2_test() {
+        let address = 42;
+        let mask = "000000000000000000000000000000X1001X";
+        let mut answer = apply_part2_mask(mask, address);
+        answer.sort();
+        assert_eq!(answer, vec![26, 27, 58, 59])
+    }
 }
