@@ -95,7 +95,7 @@ fn part1(input: &str) -> Result<u64, Box<dyn Error>> {
 enum Bit {
     ZERO,
     ONE,
-    FLOATING
+    FLOATING,
 }
 
 fn apply_part2_mask(mask: &str, value: u64) -> Vec<u64> {
@@ -106,7 +106,7 @@ fn apply_part2_mask(mask: &str, value: u64) -> Vec<u64> {
     let mut mask_apply_str = String::new();
     // now go through and set matching X
     for (index, char) in partial_mask_apply_str.chars().enumerate() {
-        if mask[index..index+1] == *"X" {
+        if mask[index..index + 1] == *"X" {
             mask_apply_str.push('X');
         } else {
             mask_apply_str.push(char)
