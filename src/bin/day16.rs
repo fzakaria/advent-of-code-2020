@@ -1,16 +1,20 @@
 #![feature(str_split_once)]
 
 use advent_of_code_2020::AdventOfCodeError;
+use itertools::Itertools;
 use regex::Regex;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
 use std::num::ParseIntError;
 use std::ops::RangeInclusive;
 
+#[derive(Debug, PartialEq)]
 struct Rule<'a> {
     name: &'a str,
     ranges: Vec<RangeInclusive<i64>>,
 }
 
+#[derive(Debug, PartialEq)]
 struct Input<'a> {
     rules: Vec<Rule<'a>>,
     my_ticket: Ticket,
@@ -58,6 +62,7 @@ impl Input<'_> {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct Ticket {
     values: Vec<i64>,
 }
@@ -71,6 +76,21 @@ impl Ticket {
             .map_err(|_| AdventOfCodeError::Custom("Could not parse ticket".to_string()))?;
 
         Ok(Ticket { values })
+    }
+
+    fn is_valid(&self, rules: &Vec<Rule>) -> (bool, Vec<i64>) {
+        let mut result: Vec<i64> = vec![];
+        for value in &self.values {
+            let is_valid_value = rules
+                .iter()
+                .flat_map(|rule| &rule.ranges)
+                .any(|range| range.contains(&value));
+            if !is_valid_value {
+                result.push(value.clone());
+            }
+        }
+
+        return (result.is_empty(), result);
     }
 }
 
@@ -121,28 +141,71 @@ fn part1(input: &str) -> Result<i64, Box<dyn Error>> {
     //Ignore your ticket for now.
     let mut error_rate: i64 = 0;
     for ticket in input.nearby_tickets {
-        for value in ticket.values {
-            let mut valid = false;
-            for rule in &input.rules {
-                for range in &rule.ranges {
-                    if range.contains(&value) {
-                        valid |= true;
-                    }
-                }
-            }
-
-            if !valid {
-                error_rate += value;
-            }
-        }
+        let (_, failed_numbers) = ticket.is_valid(&input.rules);
+        error_rate += failed_numbers.iter().sum::<i64>();
     }
 
     println!("part1: {}", error_rate);
     Ok(error_rate)
 }
 
-fn part2(input: &str) -> Result<u64, Box<dyn Error>> {
-    Ok(0)
+fn part2(input: &str) -> Result<i64, Box<dyn Error>> {
+    let input = Input::from_str(input)?;
+
+    let valid_nearby_tickets: Vec<&Ticket> = input
+        .nearby_tickets
+        .iter()
+        .filter(|ticket| ticket.is_valid(&input.rules).0)
+        .collect();
+
+    let mut matches: HashMap<usize, &str> = HashMap::new();
+
+    // the number of unknown fields is the same for each ticket
+    // just use my ticket for the reference one
+    let mut unknown_fields: HashSet<usize> = (0..input.my_ticket.values.len()).collect();
+
+    while !unknown_fields.is_empty() {
+        // now we want to find a rule that works for only a single field
+        for rule in &input.rules {
+            let rule_used = matches.values().any(|&name| name == rule.name);
+            if rule_used {
+                continue;
+            }
+
+            let fields_rule_applies_to: Vec<&usize> = unknown_fields
+                .iter()
+                .filter(|&unknown_field| {
+                    valid_nearby_tickets
+                        .iter()
+                        .flat_map(|ticket| ticket.values.iter().nth(*unknown_field))
+                        .all(|value| rule.ranges.iter().any(|range| range.contains(value)))
+                })
+                .collect();
+
+            if fields_rule_applies_to.len() != 1 {
+                continue;
+            }
+
+            let position = **fields_rule_applies_to.first().unwrap();
+
+            matches.insert(position, rule.name);
+            unknown_fields.remove(&position);
+        }
+    }
+
+    let departures: HashMap<&usize, &&str> = matches
+        .iter()
+        .filter(|(_, &value)| value.starts_with("departure"))
+        .collect();
+
+    let answer = departures
+        .keys()
+        .map(|&key| input.my_ticket.values[*key])
+        .fold(1, |acc, x| acc * x);
+
+    println!("part2 {:?}", answer);
+
+    Ok(answer)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -179,5 +242,20 @@ nearby tickets:
     }
 
     #[test]
-    fn part2_test() {}
+    fn part2_test() {
+        let sample = "class: 0-1 or 4-19
+row: 0-5 or 8-19
+seat: 0-13 or 16-19
+
+your ticket:
+11,12,13
+
+nearby tickets:
+3,9,18
+15,1,5
+5,14,9";
+
+        let answer = part2(sample);
+        assert!(answer.is_ok());
+    }
 }
