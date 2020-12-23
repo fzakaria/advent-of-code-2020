@@ -43,6 +43,7 @@ struct Point {
     x: i32,
     y: i32,
     z: i32,
+    w: i32,
 }
 
 impl fmt::Display for Point {
@@ -51,7 +52,7 @@ impl fmt::Display for Point {
     }
 }
 
-fn neighbors(cubes: &HashMap<Point, Status>, point: &Point) -> HashMap<Point, Status> {
+fn neighbors_3d(cubes: &HashMap<Point, Status>, point: &Point) -> HashMap<Point, Status> {
     let mut neighbors: HashMap<Point, Status> = HashMap::new();
     for x_off in -1..=1 {
         for y_off in -1..=1 {
@@ -59,7 +60,7 @@ fn neighbors(cubes: &HashMap<Point, Status>, point: &Point) -> HashMap<Point, St
                 let x = point.x + x_off;
                 let y = point.y + y_off;
                 let z = point.z + z_off;
-                let neighbor_point = Point { x, y, z };
+                let neighbor_point = Point { x, y, z, w: 0 };
 
                 // make sure we don't return ourselves
                 if *point == neighbor_point {
@@ -77,7 +78,40 @@ fn neighbors(cubes: &HashMap<Point, Status>, point: &Point) -> HashMap<Point, St
     return neighbors;
 }
 
-fn cycle(cubes: &HashMap<Point, Status>) -> HashMap<Point, Status> {
+fn neighbors_4d(cubes: &HashMap<Point, Status>, point: &Point) -> HashMap<Point, Status> {
+    let mut neighbors: HashMap<Point, Status> = HashMap::new();
+    for x_off in -1..=1 {
+        for y_off in -1..=1 {
+            for z_off in -1..=1 {
+                for w_off in -1..=1 {
+                    let x = point.x + x_off;
+                    let y = point.y + y_off;
+                    let z = point.z + z_off;
+                    let w = point.w + w_off;
+                    let neighbor_point = Point { x, y, z, w };
+
+                    // make sure we don't return ourselves
+                    if *point == neighbor_point {
+                        continue;
+                    }
+
+                    match cubes.get(&neighbor_point) {
+                        None => neighbors.insert(neighbor_point.clone(), Status::Inactive),
+                        Some(status) => neighbors.insert(neighbor_point.clone(), status.clone()),
+                    };
+                }
+            }
+        }
+    }
+
+    assert_eq!(neighbors.len(), 80);
+    return neighbors;
+}
+
+fn cycle(
+    cubes: &HashMap<Point, Status>,
+    neighbors: fn(&HashMap<Point, Status>, &Point) -> HashMap<Point, Status>,
+) -> HashMap<Point, Status> {
     // first lets expand to include the new neighbors
     let mut expanded_cubes = cubes.clone();
     for point in cubes.keys() {
@@ -88,7 +122,6 @@ fn cycle(cubes: &HashMap<Point, Status>) -> HashMap<Point, Status> {
             }
         }
     }
-
 
     let mut next_cubes = HashMap::new();
     for (point, status) in expanded_cubes.iter() {
@@ -128,6 +161,7 @@ fn part1(input: &str) -> Result<usize, Box<dyn Error>> {
                 x: x as i32,
                 y: y as i32,
                 z: 0,
+                w: 0,
             };
             let status: Status = char.into();
             cubes.insert(point, status);
@@ -135,7 +169,7 @@ fn part1(input: &str) -> Result<usize, Box<dyn Error>> {
     }
 
     for _ in 1..=6 {
-        cubes = cycle(&mut cubes);
+        cubes = cycle(&mut cubes, neighbors_3d);
     }
 
     let answer = cubes
@@ -147,8 +181,33 @@ fn part1(input: &str) -> Result<usize, Box<dyn Error>> {
     Ok(answer)
 }
 
-fn part2(input: &str) -> Result<i64, Box<dyn Error>> {
-    Ok(0)
+fn part2(input: &str) -> Result<usize, Box<dyn Error>> {
+    // parse the input
+    let mut cubes = HashMap::new();
+    for (y, line) in input.lines().enumerate() {
+        for (x, char) in line.chars().enumerate() {
+            let point = Point {
+                x: x as i32,
+                y: y as i32,
+                z: 0,
+                w: 0,
+            };
+            let status: Status = char.into();
+            cubes.insert(point, status);
+        }
+    }
+
+    for _ in 1..=6 {
+        cubes = cycle(&mut cubes, neighbors_4d);
+    }
+
+    let answer = cubes
+        .values()
+        .filter(|&state| *state == Status::Active)
+        .count();
+    println!("part2: {}", answer);
+
+    Ok(answer)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
