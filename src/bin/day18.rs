@@ -45,7 +45,7 @@ impl<'a> Parser<'a> {
             it: iterator.peekable(),
             next: Option::None,
         };
-        parser.expression()
+        parser.factor()
     }
 
     /**
@@ -59,10 +59,24 @@ impl<'a> Parser<'a> {
          same expr local variable. As we zip through a sequence of equality expressions,
          that creates a left-associative nested tree of binary operator nodes.
     */
-    fn expression(&mut self) -> Result<Node, AdventOfCodeError> {
+    fn factor(&mut self) -> Result<Node, AdventOfCodeError> {
+        let mut expr = self.additive()?;
+        while self.check("*") {
+            let op = self.operator()?;
+            let rhs = self.additive()?;
+            expr = Node::BinaryExpression {
+                lhs: Box::new(expr),
+                op,
+                rhs: Box::new(rhs),
+            }
+        }
+        return Ok(expr);
+    }
+
+    fn additive(&mut self) -> Result<Node, AdventOfCodeError> {
         let mut expr = self.term()?;
 
-        while self.check("+") || self.check("*") {
+        while self.check("+") {
             let op = self.operator()?;
             let rhs = self.term()?;
             expr = Node::BinaryExpression {
@@ -93,7 +107,7 @@ impl<'a> Parser<'a> {
             Some(next) => {
                 if next == "(" {
                     self.expect("(")?;
-                    let group = self.expression()?;
+                    let group = self.factor()?;
                     self.expect(")")?;
                     Ok(group)
                 } else {
@@ -193,5 +207,10 @@ mod tests {
     }
 
     #[test]
-    fn part2_test() {}
+    fn part2_test() {
+        let sample = "2 * 3 + (4 * 5)";
+        let answer = part1(sample);
+        assert!(answer.is_ok());
+        assert_eq!(answer.unwrap(), 46);
+    }
 }
